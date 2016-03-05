@@ -13,7 +13,7 @@ static void __init test_stack(void)
     stack_entry_t *tos = NULL;
     const char *tos_data = NULL;
     const char* test_data[] = { "1", "2", "3", "4" };
-    unsigned long i = 0;
+    long i = 0;
 
     pr_alert("Testing basic stack");
 
@@ -36,7 +36,25 @@ static void __init test_stack(void)
 
 static void __init print_processes_backwards(void)
 {
-    // TODO
+    struct task_struct *task_list;
+    LIST_HEAD(proc_stack);
+    long counter = 0;
+    const char *process_name = NULL;
+    stack_entry_t *stack_top = NULL;
+
+	for_each_process(task_list) 
+	{
+		stack_push(&proc_stack, create_stack_entry((void*)(task_list->comm)));
+		counter++;
+	}
+
+	for (; counter > 0; counter--)
+	{
+		stack_top = stack_pop(&proc_stack);
+		process_name = STACK_ENTRY_DATA(stack_top, const char*);
+		printk(KERN_ALERT "%s\n", process_name);
+	}
+
 }
 
 static int __init ll_init(void)
