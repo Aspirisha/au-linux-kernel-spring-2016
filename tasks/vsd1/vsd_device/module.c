@@ -13,7 +13,8 @@
 #define LOG_TAG "[VSD_PLAT_DEVICE] "
 
 static unsigned long buf_size = 4096;
-module_param(buf_size, ulong, S_IRUGO);
+module_param(buf_size, ulong, S_IRUGO); // declare arguent of type ulong with name buf_size ;
+                                        //Use S_IRUGO for a parameter that can be read by the world but cannot be changed
 
 typedef struct vsd_plat_device {
     struct platform_device pdev;
@@ -63,7 +64,7 @@ static int __init vsd_dev_module_init(void)
     if ((ret = platform_device_register(&dev.pdev)))
         goto error_reg;
 
-    pr_notice("VSD device with storage at vaddr %p of size %zu was started",
+    pr_notice("VSD device with storage at vaddr %p of size %zu was started\n",
             dev.vbuf, dev.buf_size);
     return 0;
 error_reg:
