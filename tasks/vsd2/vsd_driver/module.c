@@ -109,7 +109,7 @@ static long vsd_ioctl_get_size(vsd_ioctl_get_size_arg_t __user *uarg)
 static long vsd_ioctl_set_size(vsd_ioctl_set_size_arg_t __user *uarg)
 {
     vsd_ioctl_set_size_arg_t arg;
-    if (0/* TODO device is currently mapped */)
+    if (vsd_dev->mmap_count)
         return -EBUSY;
 
     if (copy_from_user(&arg, uarg, sizeof(arg)))
@@ -156,6 +156,8 @@ static struct vm_operations_struct vsd_dev_vma_ops = {
 static int map_vmalloc_range(struct vm_area_struct *uvma, void *kaddr, size_t size)
 {
     unsigned long uaddr = uvma->vm_start;
+    size_t offset;
+
     if (!PAGE_ALIGNED(uaddr) || !PAGE_ALIGNED(kaddr)
             || !PAGE_ALIGNED(size))
         return -EINVAL;
@@ -170,6 +172,12 @@ static int map_vmalloc_range(struct vm_area_struct *uvma, void *kaddr, size_t si
      */
     // TODO
 
+    for (offset = 0; offset < size; offset += PAGE_SIZE) {
+        struct page* page_ptr = vmalloc_to_page(kaddr + offset);
+        int err = vm_insert_page(uvma, uvma->vm_start + offset, page_ptr);
+        if (err) 
+            return err;
+    }
     uvma->vm_flags |= VM_DONTEXPAND | VM_DONTDUMP;
     return 0;
 }
