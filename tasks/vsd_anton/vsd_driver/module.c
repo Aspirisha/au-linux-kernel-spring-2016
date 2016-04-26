@@ -164,7 +164,7 @@ static int map_vmalloc_range(struct vm_area_struct *uvma, void *kaddr, size_t si
 
     while (size > 0) {
         page_ptr = vmalloc_to_page(kaddr);
-        if ((result = vm_insert_page(uvma, uaddr, page_ptr))) {
+        if (result = vm_insert_page(uvma, uaddr, page_ptr)) {
             return result;
         }
         kaddr += PAGE_SIZE;
