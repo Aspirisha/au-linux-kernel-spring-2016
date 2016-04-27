@@ -76,7 +76,7 @@ static ssize_t vsd_dev_write(char *src, size_t src_size, size_t offset) {
     return src_size;
 }
 
-static void vsd_dev_set_size(size_t size)
+static ssize_t vsd_dev_set_size(size_t size)
 {
     // TODO implement command
     // if size > VSD size then return -EINVAL to vsd_driver
@@ -84,14 +84,22 @@ static void vsd_dev_set_size(size_t size)
     // Ensure that woken up task observes your writes
     // to shared memory (hwregs).
     // If new size is > current size then return -EINVAL.
+
+
+    if (size > dev.hwregs->dev_size)
+        return -EINVAL;
+    dev.hwregs->dev_size = size;
+    dev.buf_size = size;
+
+    return size;
 }
 
-static void vsd_dev_cmd_rw_after(ssize_t ret)
+static void vsd_dev_cmd_rws_after(ssize_t ret)
 {
     struct tasklet_struct *comp_tasklet =
         (struct tasklet_struct*)dev.hwregs->tasklet_vaddr;
     dev.hwregs->result = ret < 0 ? (int32_t)ret : 0;
-    dev.hwregs->dma_size = (uint64_t)ret;
+    dev.hwregs->dma_size = (uint64_t)ret; // yep, this is useless for set_size, but who cares
     wmb();
     dev.hwregs->cmd = VSD_CMD_NONE;
     if (comp_tasklet) {
@@ -111,7 +119,7 @@ static int vsd_dev_cmd_poll_kthread_func(void *data)
                         (size_t)dev.hwregs->dma_size,
                         (size_t)dev.hwregs->dev_offset
                 );
-                vsd_dev_cmd_rw_after(ret);
+                vsd_dev_cmd_rws_after(ret);
                 break;
             case VSD_CMD_WRITE:
                 ret = vsd_dev_write(
@@ -119,11 +127,13 @@ static int vsd_dev_cmd_poll_kthread_func(void *data)
                         (size_t)dev.hwregs->dma_size,
                         (size_t)dev.hwregs->dev_offset
                 );
-                vsd_dev_cmd_rw_after(ret);
+                vsd_dev_cmd_rws_after(ret);
                 break;
             case VSD_CMD_SET_SIZE:
                 // TODO call vsd_dev_set_size
                 // with right arguments
+                ret = vsd_dev_set_size((size_t)dev.hwregs->dev_offset);
+                vsd_dev_cmd_rws_after(ret);
                 break;
         }
 
