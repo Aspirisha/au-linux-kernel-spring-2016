@@ -1,7 +1,7 @@
 #ifndef _SHARED_SPINLOCK_H_
 #define _SHARED_SPINLOCK_H_
 
-#define SHARED_SPIN_TRY_LOCK_NUM_ITERS 1000
+#define SHARED_SPIN_TRY_LOCK_NUM_ITERS 10
 #define cpu_relax() do { \
     asm volatile("pause\n":::); \
 }while(0)
@@ -31,6 +31,10 @@ static inline int shared_spin_trylock(shared_spinlock_t *lock)
         cpu_relax();
     }
     return 0;
+}
+
+static inline int shared_spin_one_try_lock(shared_spinlock_t *lock) {
+    return __sync_bool_compare_and_swap(&lock->value, 0, 1);
 }
 
 static inline void shared_spin_lock(shared_spinlock_t *lock)

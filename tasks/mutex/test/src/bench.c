@@ -37,6 +37,7 @@ void* bench_thread_func(void *ignored)
             break;
         mutex_unlock(&shared_counter_mutex);
     }
+    printf("%zu\n", shared_counter);
     mutex_unlock(&shared_counter_mutex);
     return NULL;
 }

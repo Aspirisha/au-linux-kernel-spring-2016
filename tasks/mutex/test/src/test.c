@@ -45,11 +45,14 @@ void test_once()
     pthread_attr_init(&thread_attrs);
     pthread_t thread;
     pthread_create(&thread, &thread_attrs, test_lock_mutex_ok, &mutex4);
+
     usleep(2 * 1000 * 1000); // 2 secs
     assert(mutex_unlock(&mutex4) == MUTEX_OK);
-    pthread_join(thread, NULL);
 
+    pthread_join(thread, NULL);
+    
     assert(mutex_unlock(&mutex1) == MUTEX_OK);
+
     assert(mutex_unlock(&mutex2) == MUTEX_OK);
     assert(mutex_unlock(&mutex3) == MUTEX_OK);
     assert(mutex_unlock(&mutex5) == MUTEX_OK);
@@ -83,11 +86,14 @@ void test_once()
     assert(mutex_lock(&mutex3) != MUTEX_OK);
     assert(mutex_lock(&mutex4) != MUTEX_OK);
 
+
     pthread_create(&thread, &thread_attrs, test_lock_mutex_nok, &mutex1);
     pthread_join(thread, NULL);
+    
 
     pthread_create(&thread, &thread_attrs, test_lock_mutex_nok, &mutex3);
     pthread_join(thread, NULL);
+
 
     // Fast path again
     assert(mutex_unlock(&mutex1) == MUTEX_OK);
